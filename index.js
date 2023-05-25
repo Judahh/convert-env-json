@@ -44,12 +44,11 @@ function replaceJSON(jsonContent, ignore, replace, replaceTo){
     if (Object.hasOwnProperty.call(jsonContent, key)) {
       const element = jsonContent[key];
       if (ignore && matchRule(key, ignore) || replace && matchRule(key, replace)) {
+        if (replace && matchRule(key, replace, replaceTo)) {
+          let newkey = replaceRule(key, replace, replaceTo);
+          jsonContent[newkey] = element;
+        }
         delete jsonContent[key];
-      }
-      if (replace && matchRuleShort(key, replace, replaceTo)) {
-        let newkey = replaceRule(key, replace, replaceTo);
-
-        jsonContent[newkey] = element;
       }
     }
   }
