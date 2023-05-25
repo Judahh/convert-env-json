@@ -2,6 +2,17 @@ const core = require("@actions/core");
 // const github = require("@actions/github");
 const fs = require("fs");
 
+function matchRule(str, rule) {
+  var escapeRegex = (str) => str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+  return new RegExp("^" + rule.split("*").map(escapeRegex).join(".*") + "$").test(str);
+}
+
+function replaceRule(str, rule, replace) {
+  var escapeRegex = (str) => str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
+  return str.replace(new RegExp("^" + rule.split("*").map(escapeRegex).join(".*") + "$"), replace);
+}
+
+
 /**
  * Read file synchronously and return the content of it
  *
@@ -28,16 +39,34 @@ function writeFile(path, content) {
   fs.writeFileSync(path, content);
 }
 
+function replaceJSON(jsonContent, ignore, replace, replaceTo){
+  for (const key in jsonContent) {
+    if (Object.hasOwnProperty.call(jsonContent, key)) {
+      const element = jsonContent[key];
+      if (ignore && matchRule(key, ignore) || replace && matchRule(key, replace)) {
+        delete jsonContent[key];
+      }
+      if (replace && matchRuleShort(key, replace, replaceTo)) {
+        let newkey = replaceRule(key, replace, replaceTo);
+
+        jsonContent[newkey] = element;
+      }
+    }
+  }
+  return jsonContent;
+}
+
 /**
  * Convert env file into JSON
  *
  * @param {String} inputPath - file path of env to convert
  * @param {String} outputPath - new file path of JSON output
  */
-function convertEnvToJson(inputPath, outputPath) {
+function convertEnvToJson(inputPath, outputPath, ignore, replace, replaceTo) {
   const inputContent = readFile(inputPath);
+  console.log(`input: \n${inputContent}`);
   const properties = inputContent.split("\n").filter((val) => !!val.trim());
-  const jsonContent = properties.reduce((acc, prop) => {
+  let jsonContent = properties.reduce((acc, prop) => {
     const propArr = prop.split("=");
     const key = propArr.splice(0, 1);
     const value = propArr
@@ -46,6 +75,7 @@ function convertEnvToJson(inputPath, outputPath) {
       .replace(/['"]$/gi, "");
     return { ...acc, [key]: value };
   }, {});
+  jsonContent = replaceJSON(jsonContent, ignore, replace, replaceTo);
   const jsonStr = JSON.stringify(jsonContent, undefined, 2);
 
   // create ouput JSON file
@@ -59,9 +89,11 @@ function convertEnvToJson(inputPath, outputPath) {
  * @param {String} inputPath - file path of JSON to convert
  * @param {String} outputPath - new file path of env output
  */
-function convertJsonToEnv(inputPath, outputPath) {
+function convertJsonToEnv(inputPath, outputPath, ignore, replace, replaceTo) {
   const inputContent = readFile(inputPath);
+  console.log(`input: \n${inputContent}`);
   const jsonContent = JSON.parse(inputContent);
+  jsonContent = replaceJSON(jsonContent, ignore, replace, replaceTo);
   const envStr = Object.entries(jsonContent).reduce((acc, [key, value]) => {
     return `${acc}${key}=${value}\n`;
   }, "");
@@ -78,9 +110,12 @@ function convertJsonToEnv(inputPath, outputPath) {
     const type = core.getInput("type");
     const inputPath = core.getInput("input_path");
     const outputPath = core.getInput("output_path");
+    const ignore = core.getInput("ignore") || undefined;
+    const replace = core.getInput("replace") || undefined;
+    const replaceTo = core.getInput("replaceTo") || '';
 
-    if (type === "env-to-json") return convertEnvToJson(inputPath, outputPath);
-    if (type === "json-to-env") return convertJsonToEnv(inputPath, outputPath);
+    if (type === "env-to-json") return convertEnvToJson(inputPath, outputPath, ignore, replace, replaceTo);
+    if (type === "json-to-env") return convertJsonToEnv(inputPath, outputPath, ignore, replace, replaceTo);
     throw new Error(`Type ${type} not allowed`);
   } catch (err) {
     core.setFailed(err);

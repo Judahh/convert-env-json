@@ -13,6 +13,18 @@ inputs:
   output_path:
     description: full path of output file
     required: true
+  ignore:
+    description: ignore keys
+    required: true
+    default: ""
+  replace:
+    description: replace keys
+    required: true
+    default: ""
+  replaceTo:
+    description: replace keys to
+    required: true
+    default: ""
 branding:
   icon: list
   color: gray-dark
