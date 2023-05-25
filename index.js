@@ -91,7 +91,7 @@ function convertEnvToJson(inputPath, outputPath, ignore, replace, replaceTo) {
 function convertJsonToEnv(inputPath, outputPath, ignore, replace, replaceTo) {
   const inputContent = readFile(inputPath);
   console.log(`input: \n${inputContent}`);
-  const jsonContent = JSON.parse(inputContent);
+  let jsonContent = JSON.parse(inputContent);
   jsonContent = replaceJSON(jsonContent, ignore, replace, replaceTo);
   const envStr = Object.entries(jsonContent).reduce((acc, [key, value]) => {
     return `${acc}${key}=${value}\n`;
