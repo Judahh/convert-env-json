@@ -9,7 +9,9 @@ function matchRule(str, rule) {
 
 function replaceRule(str, rule, replace) {
   var escapeRegex = (str) => str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
-  return str.replace(new RegExp("^" + rule.split("*").map(escapeRegex).join(".*") + "$"), replace);
+  rule = "(?<=^)" + rule.split("*").map(escapeRegex).join("(?=.*)") + "(?=$)";
+  rule = rule.replace(')(?=', '');
+  return str.replace(new RegExp(rule), replace);
 }
 
 
