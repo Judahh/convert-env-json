@@ -108,6 +108,11 @@ function convertJsonToEnv(inputContent, outputPath, ignore, replace, replaceTo) 
 
     const paths = inputPath.split(" ");
 
+    if(!type) throw new Error('type is required');
+
+    if(type !== 'env-to-json' && type !== 'json-to-env')
+      throw new Error(`Type ${type} not allowed`);
+
     if (paths.length > 1) {
       let output = '';
       for (const path of paths) {
@@ -122,7 +127,6 @@ function convertJsonToEnv(inputContent, outputPath, ignore, replace, replaceTo) 
       console.log(`output: \n${output}`);
       return output;
     }
-    throw new Error(`Type ${type} not allowed`);
   } catch (err) {
     core.setFailed(err);
   }
