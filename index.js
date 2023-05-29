@@ -63,9 +63,7 @@ function replaceJSON(jsonContent, ignore, replace, replaceTo){
  * @param {String} inputPath - file path of env to convert
  * @param {String} outputPath - new file path of JSON output
  */
-function convertEnvToJson(inputPath, outputPath, ignore, replace, replaceTo) {
-  const inputContent = readFile(inputPath);
-  console.log(`input: \n${inputContent}`);
+function convertEnvToJson(inputContent, outputPath, ignore, replace, replaceTo) {
   const properties = inputContent.split("\n").filter((val) => !!val.trim());
   let jsonContent = properties.reduce((acc, prop) => {
     const propArr = prop.split("=");
@@ -79,9 +77,7 @@ function convertEnvToJson(inputPath, outputPath, ignore, replace, replaceTo) {
   jsonContent = replaceJSON(jsonContent, ignore, replace, replaceTo);
   const jsonStr = JSON.stringify(jsonContent, undefined, 2);
 
-  // create ouput JSON file
-  writeFile(outputPath, jsonStr);
-  console.log(`output: \n${jsonStr}`);
+  return jsonStr;
 }
 
 /**
@@ -90,18 +86,13 @@ function convertEnvToJson(inputPath, outputPath, ignore, replace, replaceTo) {
  * @param {String} inputPath - file path of JSON to convert
  * @param {String} outputPath - new file path of env output
  */
-function convertJsonToEnv(inputPath, outputPath, ignore, replace, replaceTo) {
-  const inputContent = readFile(inputPath);
-  console.log(`input: \n${inputContent}`);
+function convertJsonToEnv(inputContent, outputPath, ignore, replace, replaceTo) {
   let jsonContent = JSON.parse(inputContent);
   jsonContent = replaceJSON(jsonContent, ignore, replace, replaceTo);
   const envStr = Object.entries(jsonContent).reduce((acc, [key, value]) => {
     return `${acc}${key}=${value}\n`;
   }, "");
-
-  // create ouput env file
-  writeFile(outputPath, envStr);
-  console.log(`output: \n${envStr}`);
+  return envStr;
 }
 
 // main
@@ -115,8 +106,22 @@ function convertJsonToEnv(inputPath, outputPath, ignore, replace, replaceTo) {
     const replace = core.getInput("replace") || undefined;
     const replaceTo = core.getInput("replaceTo") || '';
 
-    if (type === "env-to-json") return convertEnvToJson(inputPath, outputPath, ignore, replace, replaceTo);
-    if (type === "json-to-env") return convertJsonToEnv(inputPath, outputPath, ignore, replace, replaceTo);
+    const paths = inputPath.split(" ");
+
+    if (paths.length > 1) {
+      let output = '';
+      for (const path of paths) {
+        if(path){
+          const inputContent = readFile(path);
+          console.log(`input: \n${inputContent}`);
+          if (type === "env-to-json") output += '\n' + convertEnvToJson(inputContent, outputPath, ignore, replace, replaceTo);
+          if (type === "json-to-env") output += '\n' +  convertJsonToEnv(inputContent, outputPath, ignore, replace, replaceTo);
+        }
+      }
+      writeFile(outputPath, output);
+      console.log(`output: \n${output}`);
+      return output;
+    }
     throw new Error(`Type ${type} not allowed`);
   } catch (err) {
     core.setFailed(err);
