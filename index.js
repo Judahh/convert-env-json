@@ -90,6 +90,10 @@ function convertJsonToEnv(inputContent, outputPath, ignore, replace, replaceTo) 
   let jsonContent = JSON.parse(inputContent);
   jsonContent = replaceJSON(jsonContent, ignore, replace, replaceTo);
   const envStr = Object.entries(jsonContent).reduce((acc, [key, value]) => {
+    if(value.includes('\n')){
+      value = value.replace(/'/g, "\\'");
+      value = `'${value}'`;
+    }
     return `${acc}${key}=${value}\n`;
   }, "");
   return envStr;
