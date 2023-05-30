@@ -119,8 +119,12 @@ function convertJsonToEnv(inputContent, outputPath, ignore, replace, replaceTo) 
         if(path){
           const inputContent = readFile(path);
           console.log(`input: \n${inputContent}`);
-          if (type === "env-to-json") output += '\n' + convertEnvToJson(inputContent, outputPath, ignore, replace, replaceTo);
-          if (type === "json-to-env") output += '\n' +  convertJsonToEnv(inputContent, outputPath, ignore, replace, replaceTo);
+          if(inputContent){
+            if (type === "env-to-json")
+              output += '\n' + convertEnvToJson(inputContent, outputPath, ignore, replace, replaceTo);
+            if (type === "json-to-env")
+              output += '\n' +  convertJsonToEnv(inputContent, outputPath, ignore, replace, replaceTo);
+          }
         }
       }
       writeFile(outputPath, output);
